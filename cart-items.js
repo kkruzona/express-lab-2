@@ -8,7 +8,6 @@ async function getTable(req, res){
   }
 
  cart.get("/", (req, res) => {
-    // getTable(req, res);
     let maxPrice = req.query.maxPrice;
     if (maxPrice){
         pool.query("select * from shopping_cart where price<=$1", [maxPrice]).then(result =>{
@@ -24,17 +23,10 @@ async function getTable(req, res){
         pool.query("SELECT * FROM shopping_cart LIMIT $1", [pageSize]).then(result =>{
         res.json(result.rows);
     })}
+    getTable(req, res);
  });
 
  cart.get("/:id", async (req, res) => {
-    // let id = req.params.id;
-    // let found = await pool.query("SELECT * FROM shopping_cart WHERE id=$1", [id]);
-    // if(found){
-    //     res.json(result.rows);
-    // }else {
-    //     res.status(404).send('ID Not Found');
-    // }
-    // res.json(found);
     let id = req.params.id;
     try {
         let result = await pool.query("SELECT * FROM shopping_cart WHERE id=$1", [id]);
@@ -49,16 +41,24 @@ async function getTable(req, res){
     }
  });
 
- cart.post("/", (req, res) => {
+ cart.post("/", async (req, res) => {
+    const { product, price, quantity } = req.body;
+    await pool.query('INSERT INTO shopping_cart(product, price, quantity) VALUES($1, $2, $3)', [product, price, quantity])
+    let newItem = await pool.query('SELECT * FROM shopping_cart WHERE product=$1 ORDER BY id DESC LIMIT 1',[product])
+    res.status(201).json(newItem.rows);
+});
 
+ cart.put("/:id", async (req, res) => {
+    let updatedItem = req.body;
+    await pool.query('UPDATE shopping_cart SET "product"=$1, "price"=$2, "quantity"=$3 WHERE id=$4',[req.body.product, req.body.price, req.body.quantity, req.params.id])
+    let newItem = await pool.query('SELECT * FROM shopping_cart WHERE id=$1',[req.params.id])
+    res.json(newItem.rows);
  });
 
- cart.put("/:id", (req, res) => {
-
- });
-
- cart.delete("/", (req, res) => {
-
+ cart.delete("/:id", async (req, res) => {
+    let id = req.params.id;
+    let results = await pool.query('DELETE FROM shopping_cart WHERE id=$1', [id])
+    res.status(204).json(results);
  });
 
  module.exports = cart; 
