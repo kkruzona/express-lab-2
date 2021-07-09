@@ -26,6 +26,18 @@ async function getTable(req, res){
     getTable(req, res);
  });
 
+//Chris's extended challege BEGINNING - to get total of cart items
+  cart.get("/total", async (req, res) => {
+    let price = req.params.price;
+    let quantity = req.params.quantity;
+    let product = req.params.product;
+    let itemTotal = await pool.query("SELECT product, SUM(price * quantity) AS total FROM shopping_cart GROUP BY product ORDER BY product ASC");
+    let grandTotal = await pool.query("SELECT SUM(price * quantity) AS total FROM shopping_cart");
+    let totalItems = await pool.query("SELECT SUM(quantity) AS count FROM shopping_cart");
+    res.json({"Total Items": totalItems.rows, "Total by Product": itemTotal.rows, "Grand Total": grandTotal.rows});
+});
+//extended challege END
+
  cart.get("/:id", async (req, res) => {
     let id = req.params.id;
     try {
